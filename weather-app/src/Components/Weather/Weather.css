@@ -104,7 +104,9 @@
     border: 2px solid rgba(0, 0, 0, .2);
     width: 30%;
     text-align: center;
-    background-color: aliceblue;
+    background-image: url('../Assets/water-waves.jpg');
+    background-size: cover;
+    background-position: center;
     border-radius: 30px;
 }
 

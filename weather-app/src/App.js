@@ -1,6 +1,6 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import LoginRegister from './Components/LoginRegister/LoginRegister';
-import Weather from './Components/Weather/Weather'
+import LoginRegister from './Components/LoginRegister/LoginRegister.jsx';
+import Weather from './Components/Weather/Weather.jsx'
 
 function App() {
   return (

@@ -29,6 +29,47 @@ const LoginRegister = () => {
         setAction('');
     };
 
+    // Performs the login
+    const handleLoginSubmit = async (e) => {
+        e.preventDefault();
+
+        const loginData = {
+            username: loginUsername,
+            password: loginPassword
+        };
+
+        try {
+            console.log("Login data: ", loginData);
+            const response = await fetch('http://localhost:5000/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(loginData),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                localStorage.setItem('username', data.username);
+                localStorage.setItem('userID', data.userID);
+                localStorage.setItem('locations', data.userLocations)
+
+                setLoginUsername('');
+                setLoginPassword('');
+
+                navigate('/weather');
+            }
+            else {
+                setError("Invalid Username or Password.");
+            }
+        }
+        catch (error) {
+            console.log("Error:", error);
+            setError("Something went wrong.");
+        }
+    }
+
     // Verifies register username
     const validateUsername = (username) => {
         const regex = /^[a-zA-Z0-9]+$/;
@@ -84,11 +125,8 @@ const LoginRegister = () => {
             password: registerPassword,
         };
         
-        navigate('/weather');
-        /*
-        // Do the API call
         try {
-            const response = await fetch('put API call here like "example.com/api/register"', {
+            const response = await fetch('http://localhost:5000/api/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -98,34 +136,49 @@ const LoginRegister = () => {
     
             const data = await response.json();
     
-            if (data.success) {
-                
+            if (response.ok) {
                 localStorage.setItem('username', data.username);
                 localStorage.setItem('userID', data.userID);
-    
+                localStorage.setItem('locations', data.userLocations)
 
                 navigate('/weather');
             } else {
-                setError("There was an error creating your account.");
+                setError(data.message || 'An error occurred during registration.');
             }
         } catch (error) {
-            setError("Something went wrong. Please try again.");
-        } */
+            setError('An error occurred during registration.');
+        }
     };
 
     return (
         <div className={`wrapper${action}`}>
             <div className="form-box login">
-                <form action="">
+                <form onSubmit={handleLoginSubmit}>
                     <h1>Login</h1>
 
+                    {error && <div className="signup-error">{error}</div>}
+
                     <div className="input-box">
-                        <input id="login-username" type="text" placeholder="Username" required/>
+                        <input
+                            id="login-username"
+                            type="text"
+                            placeholder="Username"
+                            value={loginUsername}
+                            onChange={(e) => setLoginUsername(e.target.value)}
+                            required
+                        />
                         <FaUser className="icon"/>
                     </div>
 
                     <div className="input-box">
-                        <input id="login-password" type="password" placeholder="Password" required/>
+                        <input
+                            id="login-password"
+                            type="password"
+                            placeholder="Password"
+                            value={loginPassword}
+                            onChange={(e) => setLoginPassword(e.target.value)}
+                            required
+                        />
                         <FaLock className="icon"/>
                     </div>
 
@@ -136,7 +189,7 @@ const LoginRegister = () => {
                     <button type="submit">Login</button>
 
                     <div>
-                        <button type="submit"><FcGoogle className="google-icon"/>Login with Google</button>
+                        <button type="button"><FcGoogle className="google-icon"/>Login with Google</button>
                     </div>
 
                     <div className="register-link">
@@ -198,10 +251,6 @@ const LoginRegister = () => {
                             required
                         />
                         <FaLock className="icon"/>
-                    </div>
-
-                    <div className="forgot-password">
-                        <a href="#">Forgot Password?</a>
                     </div>
 
                     <button type="submit">Register</button>

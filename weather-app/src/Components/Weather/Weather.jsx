@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Weather.css';
 
 const Weather = () => {
@@ -8,33 +9,41 @@ const Weather = () => {
     const [weatherCards, setWeatherCards] = useState([]);
 
     let sample_names = [
-        {
-            "name" : "Florida",
-            "precipitation" : "low",
-        },
-        {
-            "name" : "New York",
-            "precipitation" : "high",
-        },
-        {
-            "name" : "Texas",
-            "precipitation" : "low"
-        }
-
+        "Orlando",
+        "Tampa",
+        "Miami",
     ]
+
+    const navigate = useNavigate();
 
     useEffect(() => {
 
         const savedUsername = localStorage.getItem('username');
         const savedUserID = localStorage.getItem('userID');
+        const savedLocations = localStorage.getItem('userLocations');
         
-        if (savedUsername) setUsername(savedUsername);
-        if (savedUserID) setUserID(savedUserID);
+        if (!savedUsername || !savedUserID) {
+            navigate('/');
+        } else {
+            setUsername(savedUsername);
+            setUserID(savedUserID);
+        }
+
+
+        fetch('http://localhost:5000/api/weather')
+        .then(response => response.json())
+        .then(data => {
+            setWeatherCards(data);
+        })
+        .catch(error => console.error('Error fetching weather data:', error));
 
     }, []);
 
     const handleLogout = () => {
-        // TO DO
+        // Clear out the local storage
+        localStorage.clear();
+
+        navigate('/');
     }
 
     const handleSearch = () => {
@@ -71,15 +80,16 @@ const Weather = () => {
                 >
                     Find
                 </button>
-                <p className='search-result'>Testing some random text</p>
+                <p className='search-result'></p>
                 
             </div>
 
             <div className='weather-cards'>
-                {sample_names.map((card, index) => (
+                {weatherCards.map((card, index) => (
                     <div key={index} className='weather-card'>
                         <button type='button' className='delete-card-button'>X</button>
                         <h3>{card.name}</h3>
+                        <p>Weather: {card.weather[0].main} - {card.weather[0].description}</p>
                         <p>Precipitation: {card.precipitation}</p>
                     </div>
                 ))}
