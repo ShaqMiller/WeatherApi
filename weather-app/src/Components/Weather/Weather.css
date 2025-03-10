@@ -74,6 +74,10 @@
     background-color: #0f9f18;
 }
 
+.search-button:disabled {
+    background-color: #2d3033;
+}
+
 .search-result {
     position: absolute;
     text-align: center;
