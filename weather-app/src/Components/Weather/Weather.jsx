@@ -9,11 +9,9 @@ const Weather = () => {
     const [weatherCards, setWeatherCards] = useState([]);
     const [error, setError] = useState('');
 
-    let sample_names = [
-        "Orlando",
-        "Tampa",
-        "Miami",
-    ]
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [zipToDelete, setZipToDelete] = useState(null);
+
 
     const navigate = useNavigate();
 
@@ -21,7 +19,7 @@ const Weather = () => {
 
         const savedUsername = localStorage.getItem('username');
         const savedUserID = localStorage.getItem('userID');
-        const savedLocations = localStorage.getItem('userLocations');
+        const savedLocations = localStorage.getItem('locations');
         
         if (!savedUsername || !savedUserID) {
             navigate('/');
@@ -30,13 +28,33 @@ const Weather = () => {
             setUserID(savedUserID);
         }
 
+        let parsedLocations = [];
 
-        fetch('http://localhost:5000/api/weather')
+        try {
+            parsedLocations = JSON.parse(savedLocations);
+        } catch (err) {
+            console.warn('Invalid JSON in localStorage for locations:', savedLocations);
+            parsedLocations = [];
+        }
+
+        console.log('checking this line:', parsedLocations);
+        if (parsedLocations && parsedLocations.length > 0) {
+            fetch('http://localhost:5000/api/weather', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ locations: parsedLocations })
+            })
             .then(response => response.json())
             .then(data => {
+                console.log('Data is: ', data);
                 setWeatherCards(data);
             })
-            .catch(error => console.error('Error fetching weather data:', error));
+            .catch(error => {
+                console.error('Error fetching weather data:', error)
+            });
+        }
 
     }, []);
 
@@ -78,9 +96,30 @@ const Weather = () => {
             if (data.success) {
                 setSearchQuery('');
                 setError('Added ZIP Code');
+
+                const newLocation = data.newLocation;
+
+                const newCard = await fetchSingleWeather(newLocation);
+
+                if (newCard) {
+                    setWeatherCards(prev => [...prev, newCard]);
+                }
+
+                const savedLocations = localStorage.getItem('locations');
+                let parsedLocations = [];
+
+                try {
+                    parsedLocations = JSON.parse(savedLocations);
+                } catch (err) {
+                    console.warn('Invalid JSON in localStorage for locations:', savedLocations);
+                    parsedLocations = [];
+                }
+
+                const updatedLocations = [...parsedLocations, newLocation];
+                localStorage.setItem('locations', JSON.stringify(updatedLocations));
             }
             else {
-                setError("Unable To Add More");
+                setError(`Unable To Add: ${data.message || 'Error'}`);
             }
         }
         catch (error) {
@@ -88,10 +127,65 @@ const Weather = () => {
         }
     }
 
-    const addCard = () => {
-        if (weatherCards.length < 3) {
-            const newCard = sample_names[weatherCards.length]; 
-            setWeatherCards([...weatherCards, newCard]);
+    const fetchSingleWeather = async (location) => {
+        try {
+            const response = await fetch('http://localhost:5000/api/weather', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ locations: [location] })
+            });
+    
+            const data = await response.json();
+
+            return data[0];
+
+        } catch (err) {
+            console.error('Error fetching single weather:', err);
+            return null;
+        }
+    };
+
+    const handleDelete = async (zipCode) => {
+
+        setShowConfirm(false);
+        
+        try {
+            const response = await fetch('http://localhost:5000/api/deleteLocation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    zipCode: zipCode,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                const updatedCards = weatherCards.filter(card => card.zip !== zipCode);
+                setWeatherCards(updatedCards);
+
+                const savedLocations = localStorage.getItem('locations');
+                let parsedLocations = [];
+
+                try {
+                    parsedLocations = JSON.parse(savedLocations);
+                } catch (err) {
+                    console.warn('Invalid JSON in localStorage for locations:', savedLocations);
+                    parsedLocations = [];
+                }
+
+                const updatedLocations = parsedLocations.filter(loc => loc.zip !== zipCode);
+                localStorage.setItem('locations', JSON.stringify(updatedLocations));
+            } else {
+                console.error('Error deleting location:', data.message);
+            }
+        } catch (err) {
+            console.error('Error deleteing location:', err);
         }
     }
 
@@ -125,13 +219,37 @@ const Weather = () => {
             <div className='weather-cards'>
                 {weatherCards.map((card, index) => (
                     <div key={index} className='weather-card'>
-                        <button type='button' className='delete-card-button'>X</button>
-                        <h3>{card.name}</h3>
-                        <p>Weather: {card.weather[0].main} - {card.weather[0].description}</p>
-                        <p>Precipitation: {card.precipitation}</p>
+                        <button
+                            type='button'
+                            className='delete-card-button'
+                            onClick={() => {
+                                setZipToDelete(card.zip);
+                                setShowConfirm(true);
+                            }}
+                        >
+                            X
+                        </button>
+                        <h3>{card.city}</h3>
+                        <p>Weather: {card.precipitation_type} - {card.precipitation_description}</p>
+                        <p>Temperature: {card.temperature}°F</p>
+                        <p>Feels Like: {card.feels_like}°F</p>
+                        <p>Humidity: {card.humidity}%</p>
+                        <p>Wind Speed: {card.wind_speed} m/s</p>
                     </div>
                 ))}
             </div>
+
+            {showConfirm && (
+                <div className='modal-overlay'>
+                    <div className='modal-content'>
+                        <p>Are you sure you want to delete this location?</p>
+                        <div className='modal-buttons'>
+                            <button className='confirm-button' onClick={() => handleDelete(zipToDelete)}>Yes</button>
+                            <button className='cancel-button' onClick={() => setShowConfirm(false)}>Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
         </div>
     );

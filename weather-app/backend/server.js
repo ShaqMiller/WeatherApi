@@ -131,6 +131,7 @@ app.post('/api/zipcode', async (req, res) => {
         const response = await axios.get(`http://api.openweathermap.org/geo/1.0/zip?zip=${zipCode},US&appid=${apiKey}`);
 
         if (response.status === 200) {
+            const { name, lat, lon } = response.data;
 
             const usersCollection = dbcurr.collection('Users');
             
@@ -140,16 +141,33 @@ app.post('/api/zipcode', async (req, res) => {
                 return res.status(404).json({ success: false, message: "User not found." });
             }
 
+            const alreadyExists = user.locations.some(location => location.zip === zipCode);
+
+            if (alreadyExists) {
+                return res.status(400).json( {success: false, message: 'ZIP already added.'});
+            }
+
             if (user.locations.length <= 2) {
 
-                user.locations.push(zipCode);
+                const newLocation = {
+                    zip: zipCode,
+                    name: name,
+                    latitude: lat,
+                    longitude: lon,
+                }
+
+                user.locations.push(newLocation);
 
                 await usersCollection.updateOne(
                     { username: username },
                     { $set: { locations: user.locations } }
                 );
 
-                return res.json({ success: true, message: 'ZIP code added.' });
+                return res.json({
+                    success: true,
+                    message: 'ZIP code added.',
+                    newLocation: newLocation
+                });
             }
             else {
 
@@ -169,42 +187,79 @@ app.post('/api/zipcode', async (req, res) => {
 
 // API for getting weather data (temporarily set to the data below)
 console.log("testing the server.js file prior to weather call");
-app.get('/api/weather', (req, res) => {
+app.post('/api/weather', async (req, res) => {
     console.log("attempting to get sample locations");
-    res.json(sample_locations);
+
+    const { locations } = req.body;
+
+    if (locations.length === 0) {
+        return res.status(400).json({ success: false, message: 'Empty location list.' });
+    }
+
+    try {
+        const weatherDataList = [];
+
+        for (const location of locations) {
+            const { zip, latitude, longitude } = location;
+
+            const response = await axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=imperial`);
+
+            if (response.status === 200) {
+                const weatherData = response.data;
+
+                weatherDataList.push({
+                    zip: zip,
+                    city: weatherData.name,
+                    country: weatherData.sys.country,
+                    temperature: weatherData.main.temp,
+                    feels_like: weatherData.main.feels_like,
+                    wind_speed: weatherData.wind.speed,
+                    humidity: weatherData.main.humidity,
+                    precipitation_type: weatherData.weather[0].main,
+                    precipitation_description: weatherData.weather[0].description,
+                    rain_1h: weatherData.rain?.["1h"] ?? 0,
+                    sunrise: weatherData.sys.sunrise,
+                    sunset: weatherData.sys.sunset
+                });
+            }
+        }
+
+        return res.json(weatherDataList);
+    } catch (error) {
+        console.error('Error with fetching weather data:', error);
+        return res.status(500).json({ success: false, message: 'Failed to get weather data.'});
+    }
+});
+
+app.post('/api/deleteLocation', async (req, res) => {
+    const { username, zipCode } = req.body;
+
+    if (!username || !zipCode) {
+        return res.status(400).json({ success: false, message: 'Missing username or zipCode' });
+    }
+
+    try {
+        const usersCollection = dbcurr.collection('Users');
+
+        const user = await usersCollection.findOne({ username: username });
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const updatedLocations = user.locations.filter(location => location.zip !== zipCode);
+
+        await usersCollection.updateOne(
+            { username: username },
+            { $set: { locations: updatedLocations } }
+        );
+
+        return res.json({ success: true, message: 'Location deleted' });
+
+    } catch (error) {
+        console.error('Error deleting location:', error);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
 });
 
 app.listen(5000); // start Node + Express server on port 5000
-
-let sample_locations = [
-    {
-        "name" : "Orlando",
-        "weather": [
-            {
-                "main": "Sunny",
-                "description": "no clouds",
-            }
-        ],
-        "precipitation" : "none"
-    },
-    {
-        "name" : "Tampa",
-        "weather": [
-            {
-                "main": "Clouds",
-                "description": "scattered clouds",
-            }
-        ],
-        "precipitation" : "drizzle"
-    },
-    {
-        "name" : "Miami",
-        "weather": [
-            {
-                "main": "Cloudy",
-                "description": "light clouds",
-            }
-        ],
-        "precipitation" : "low"
-    },
-]

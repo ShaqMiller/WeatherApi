@@ -52,7 +52,8 @@ const LoginRegister = () => {
             if (data.success) {
                 localStorage.setItem('username', data.username);
                 localStorage.setItem('userID', data.userID);
-                localStorage.setItem('locations', data.userLocations)
+                localStorage.setItem('locations', JSON.stringify(data.userLocations))
+
 
                 setLoginUsername('');
                 setLoginPassword('');
@@ -138,7 +139,7 @@ const LoginRegister = () => {
             if (response.ok) {
                 localStorage.setItem('username', data.username);
                 localStorage.setItem('userID', data.userID);
-                localStorage.setItem('locations', data.userLocations)
+                localStorage.setItem('locations', JSON.stringify(data.userLocations))
 
                 navigate('/weather');
             } else {
