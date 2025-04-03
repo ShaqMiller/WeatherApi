@@ -12,14 +12,14 @@ const Weather = () => {
     const [showConfirm, setShowConfirm] = useState(false);
     const [zipToDelete, setZipToDelete] = useState(null);
 
+    const token = localStorage.getItem('token');
 
     const navigate = useNavigate();
+    const savedUsername = localStorage.getItem('username');
+    const savedUserID = localStorage.getItem('userID');
+    const savedLocations = localStorage.getItem('locations');
 
     useEffect(() => {
-
-        const savedUsername = localStorage.getItem('username');
-        const savedUserID = localStorage.getItem('userID');
-        const savedLocations = localStorage.getItem('locations');
         
         if (!savedUsername || !savedUserID) {
             navigate('/');
@@ -37,16 +37,19 @@ const Weather = () => {
             parsedLocations = [];
         }
 
-        console.log('checking this line:', parsedLocations);
         if (parsedLocations && parsedLocations.length > 0) {
             fetch('http://localhost:5000/api/weather', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
                 },
                 body: JSON.stringify({ locations: parsedLocations })
             })
-            .then(response => response.json())
+            .then(response => {
+                handleAuthError(response.status);
+                return response.status === 200 ? response.json() : null;
+            })
             .then(data => {
                 console.log('Data is: ', data);
                 setWeatherCards(data);
@@ -57,6 +60,14 @@ const Weather = () => {
         }
 
     }, []);
+
+    const handleAuthError = (status) => {
+        if (status === 401 || status === 403) {
+            console.warn('Token invalid or expired. Logging out.');
+            localStorage.clear();
+            navigate('/');
+        }
+    };
 
     const handleLogout = () => {
         // Clear out the local storage
@@ -87,9 +98,12 @@ const Weather = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
                 },
                 body: JSON.stringify(zipCodeData),
             });
+
+            handleAuthError(response.status);
 
             const data = await response.json();
 
@@ -132,10 +146,13 @@ const Weather = () => {
             const response = await fetch('http://localhost:5000/api/weather', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
                 },
                 body: JSON.stringify({ locations: [location] })
             });
+
+            handleAuthError(response.status);
     
             const data = await response.json();
 
@@ -156,12 +173,15 @@ const Weather = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
                 },
                 body: JSON.stringify({
                     username: username,
                     zipCode: zipCode,
                 }),
             });
+
+            handleAuthError(response.status);
 
             const data = await response.json();
 

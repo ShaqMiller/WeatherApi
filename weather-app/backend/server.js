@@ -4,6 +4,8 @@ import cors from 'cors';
 import { MongoClient, ObjectId } from 'mongodb';
 import bcrypt from 'bcryptjs';
 import axios from 'axios';
+import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
 
 const app = express();
 app.use(cors());
@@ -39,6 +41,19 @@ app.use((req, res, next) =>
     next();
 });
 
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) return res.sendStatus(401);
+
+    jwt.verify(token, jwtSecret, (err, user) => {
+        if (err) return res.sendStatus(403);
+        req.user = user;
+        next();
+    });
+};
+
 // API for user login
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
@@ -59,8 +74,15 @@ app.post('/api/login', async (req, res) => {
             return res.json({ success: false, message: "Invalid Username or Password." });
         }
 
+        const token = jwt.sign(
+            { userID: user._id, username: user.username },
+            jwtSecret,
+            { expiresIn: jwtExpiry }
+        );
+
         return res.json({
             success: true,
+            token: token,
             username: user.username,
             userID: user._id,
             userLocations: user.locations,
@@ -103,8 +125,15 @@ app.post('/api/register', async (req, res) => {
         // get the data of the created user in the database
         const createdUser = await usersCollection.findOne({ _id: result.insertedId });
 
+        const token = jwt.sign(
+            { userID: createdUser._id, username: createdUser.username },
+            jwtSecret,
+            { expiresIn: jwtExpiry }
+        );
+
         return res.json({
             success: true,
+            token: token,
             message: "User registered successfully!",
             userID: createdUser._id,
             username: createdUser.username,
@@ -117,15 +146,67 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
+// API for google login
+app.post('/api/google-login', async (req, res) => {
+    const { access_token } = req.body;
+
+    try {
+        const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: {
+                Authorization: `Bearer ${access_token}`,
+            },
+        });
+
+        if (!userInfoResponse.ok) throw new Error('Failed to fetch user info from Google');
+
+        const payload = await userInfoResponse.json();
+
+        const { sub, name, email } = payload;
+
+        const usersCollection = dbcurr.collection('Users');
+
+        let user = await usersCollection.findOne({ googleId: sub });
+
+        if (!user) {
+            const newUser = {
+                username: name,
+                email: email,
+                googleId: sub,
+                locations: [],
+            };
+
+            const result = await usersCollection.insertOne(newUser);
+            user = await usersCollection.findOne({ _id: result.insertedId });
+        }
+
+        // Create your own JWT to use in the app
+        const token = jwt.sign(
+            { userID: user._id, username: user.username },
+            jwtSecret,
+            { expiresIn: jwtExpiry }
+        );
+
+        res.json({
+            success: true,
+            token,
+            userID: user._id,
+            username: user.username,
+            userLocations: user.locations,
+        });
+
+    } catch (error) {
+        console.error('Error verifying Google token:', error);
+        res.status(400).json({ success: false, message: 'Invalid Google login' });
+    }
+});
+
 // API to check if valid zip code
-app.post('/api/zipcode', async (req, res) => {
+app.post('/api/zipcode', authenticateToken, async (req, res) => {
     const {zipCode, username} = req.body;
 
     if (!zipCode || zipCode.length !== 5 || isNaN(zipCode)) {
         return res.status(400).json({ success: false, message: 'Please enter a valid 5-digit ZIP code.' });
     }
-
-    console.log("the zip code is" + zipCode);
 
     try {
         const response = await axios.get(`http://api.openweathermap.org/geo/1.0/zip?zip=${zipCode},US&appid=${apiKey}`);
@@ -187,8 +268,7 @@ app.post('/api/zipcode', async (req, res) => {
 
 // API for getting weather data (temporarily set to the data below)
 console.log("testing the server.js file prior to weather call");
-app.post('/api/weather', async (req, res) => {
-    console.log("attempting to get sample locations");
+app.post('/api/weather', authenticateToken, async (req, res) => {
 
     const { locations } = req.body;
 
@@ -231,7 +311,7 @@ app.post('/api/weather', async (req, res) => {
     }
 });
 
-app.post('/api/deleteLocation', async (req, res) => {
+app.post('/api/deleteLocation', authenticateToken, async (req, res) => {
     const { username, zipCode } = req.body;
 
     if (!username || !zipCode) {

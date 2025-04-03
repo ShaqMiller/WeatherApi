@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import './LoginRegister.css';
 import { FaEnvelope, FaUser, FaLock } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
+import { useGoogleLogin } from '@react-oauth/google';
+import { jwtDecode } from "jwt-decode";
 
 const LoginRegister = () => {
 
@@ -50,6 +52,7 @@ const LoginRegister = () => {
             const data = await response.json();
 
             if (data.success) {
+                localStorage.setItem('token', data.token);
                 localStorage.setItem('username', data.username);
                 localStorage.setItem('userID', data.userID);
                 localStorage.setItem('locations', JSON.stringify(data.userLocations))
@@ -69,6 +72,37 @@ const LoginRegister = () => {
             setError("Something went wrong.");
         }
     }
+
+    // Performs google login
+    const googleLogin = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            try {
+                const response = await fetch('http://localhost:5000/api/google-login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ access_token: tokenResponse.access_token }),
+                });
+    
+                const data = await response.json();
+    
+                if (data.success) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('username', data.username);
+                    localStorage.setItem('userID', data.userID);
+                    localStorage.setItem('locations', JSON.stringify(data.userLocations));
+                    navigate('/weather');
+                } else {
+                    setError(data.message || "Google login failed.");
+                }
+            } catch (error) {
+                console.error("Google login failed:", error);
+                setError("Something went wrong during Google login.");
+            }
+        },
+        onError: () => setError("Google Login Failed."),
+    });
 
     // Verifies register username
     const validateUsername = (username) => {
@@ -137,6 +171,7 @@ const LoginRegister = () => {
             const data = await response.json();
     
             if (response.ok) {
+                localStorage.setItem('token', data.token);
                 localStorage.setItem('username', data.username);
                 localStorage.setItem('userID', data.userID);
                 localStorage.setItem('locations', JSON.stringify(data.userLocations))
@@ -188,8 +223,11 @@ const LoginRegister = () => {
 
                     <button type="submit">Login</button>
 
-                    <div>
-                        <button type="button"><FcGoogle className="google-icon"/>Login with Google</button>
+                    <div className="google-login-wrapper">
+                        <button type="button" className="google-custom-button" onClick={() => googleLogin()}>
+                            <FcGoogle className="google-icon" />
+                            Login with Google
+                        </button>
                     </div>
 
                     <div className="register-link">
