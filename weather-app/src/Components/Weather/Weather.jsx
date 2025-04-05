@@ -325,12 +325,32 @@ const Weather = () => {
                             </button>
                         </div>
 
-                        <h3>{card.city}</h3>
-                        <p>Weather: {card.precipitation_type} - {card.precipitation_description}</p>
-                        <p>Temperature: {card.temperature}°F</p>
-                        <p>Feels Like: {card.feels_like}°F</p>
-                        <p>Humidity: {card.humidity}%</p>
-                        <p>Wind Speed: {card.wind_speed} m/s</p>
+                        <h3 className="card-title">{card.city}</h3>
+
+                        <div className="weather-summary">
+                            <p className="weather-type">{card.precipitation_type}</p>
+                            <p className="weather-description">({card.precipitation_description})</p>
+                        </div>
+
+                        <div className="weather-details">
+                            <div className="detail-row">
+                                <span> Temp:</span>
+                                <span>{card.temperature}°F</span>
+                            </div>
+                            <div className="detail-row">
+                                <span> Feels Like:</span>
+                                <span>{card.feels_like}°F</span>
+                            </div>
+                            <div className="detail-row">
+                                <span> Humidity:</span>
+                                <span>{card.humidity}%</span>
+                            </div>
+                            <div className="detail-row">
+                                <span> Wind:</span>
+                                <span>{card.wind_speed} m/s</span>
+                            </div>
+                        </div>
+
                     </div>
                 ))}
             </div>
