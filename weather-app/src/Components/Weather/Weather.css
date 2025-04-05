@@ -114,10 +114,36 @@
     border-radius: 30px;
 }
 
+.card-buttons {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 15px;
+}
+
+.edit-card-button {
+    background-color: #0275d8;
+    border-radius: 30px;
+    transform: scale(1.2);
+    width: 30px;
+    height: 30px;
+    font-size: 18px;
+    font-weight: 800;
+    color: white;
+    transition: ease 0.5s;
+    cursor: pointer;
+}
+
+.edit-card-button:hover {
+    transform: scale(1.25);
+    background-color: #025aa5;
+}
+
+.edit-card-button:active {
+    transform: scale(1.2);
+    background-color: #01467c;
+}
+
 .delete-card-button {
-    position: relative;
-    margin-left: 85%;
-    margin-top: 3%;
     background-color: #f81302;
     border-radius: 30px;
     transform: scale(1.2);

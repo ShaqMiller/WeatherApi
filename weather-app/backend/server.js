@@ -41,6 +41,7 @@ app.use((req, res, next) =>
     next();
 });
 
+// Function to check the JWT
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -311,6 +312,68 @@ app.post('/api/weather', authenticateToken, async (req, res) => {
     }
 });
 
+// API to update a user location
+app.post('/api/updateLocation', authenticateToken, async (req, res) => {
+    const { username, oldZip, newZip } = req.body;
+
+    if (!newZip || newZip.length !== 5 || isNaN(newZip)) {
+        return res.status(400).json({ success: false, message: 'Invalid new ZIP code.' });
+    }
+
+    try {
+        const usersCollection = dbcurr.collection('Users');
+        const user = await usersCollection.findOne({ username });
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found.' });
+        }
+
+        const zipExists = user.locations.some(loc => loc.zip === newZip);
+        if (zipExists) {
+            return res.status(400).json({ success: false, message: 'ZIP already exists.' });
+        }
+
+        const response = await axios.get(`http://api.openweathermap.org/geo/1.0/zip?zip=${newZip},US&appid=${apiKey}`);
+        const { name, lat, lon } = response.data;
+
+        const updatedLocations = user.locations.map(loc => {
+            if (loc.zip === oldZip) {
+                return {
+                    zip: newZip,
+                    name: name,
+                    latitude: lat,
+                    longitude: lon,
+                };
+            }
+            return loc;
+        });
+
+        await usersCollection.updateOne(
+            { username },
+            { $set: { locations: updatedLocations } }
+        );
+
+        res.json({
+            success: true,
+            message: 'ZIP code updated.',
+            updatedLocation: {
+                zip: newZip,
+                name,
+                latitude: lat,
+                longitude: lon,
+            }
+        });
+    } catch (error) {
+        if (error.response && error.response.status === 404) {
+            return res.status(404).json({ success: false, message: 'Invalid new ZIP code.' });
+        }
+
+        console.error('Error updating ZIP:', error);
+        return res.status(500).json({ success: false, message: 'Something went wrong.' });
+    }
+});
+
+// API to delete a zip code from the user
 app.post('/api/deleteLocation', authenticateToken, async (req, res) => {
     const { username, zipCode } = req.body;
 

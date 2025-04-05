@@ -12,12 +12,16 @@ const Weather = () => {
     const [showConfirm, setShowConfirm] = useState(false);
     const [zipToDelete, setZipToDelete] = useState(null);
 
-    const token = localStorage.getItem('token');
+    const [editingZip, setEditingZip] = useState(null);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [zipBeingEdited, setZipBeingEdited] = useState(null);
+    const [newZip, setNewZip] = useState('');    
 
     const navigate = useNavigate();
     const savedUsername = localStorage.getItem('username');
     const savedUserID = localStorage.getItem('userID');
     const savedLocations = localStorage.getItem('locations');
+    const token = localStorage.getItem('token');
 
     useEffect(() => {
         
@@ -69,10 +73,9 @@ const Weather = () => {
         }
     };
 
-    const handleLogout = () => {
-        // Clear out the local storage
-        localStorage.clear();
 
+    const handleLogout = () => {
+        localStorage.clear();
         navigate('/');
     }
 
@@ -164,6 +167,63 @@ const Weather = () => {
         }
     };
 
+    const handleZipUpdate = async (oldZip) => {
+        if (!newZip || newZip.length !== 5 || isNaN(newZip)) {
+            setError('Enter a valid new ZIP.');
+            return;
+        }
+    
+        try {
+            const response = await fetch('http://localhost:5000/api/updateLocation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({ username, oldZip, newZip }),
+            });
+    
+            handleAuthError(response.status);
+    
+            const data = await response.json();
+    
+            if (data.success) {
+                const updatedCard = await fetchSingleWeather(data.updatedLocation);
+    
+                const updatedCards = weatherCards.map(card =>
+                    card.zip === oldZip ? updatedCard : card
+                );
+    
+                setWeatherCards(updatedCards);
+    
+                const savedLocations = localStorage.getItem('locations');
+                let parsedLocations = [];
+    
+                try {
+                    parsedLocations = JSON.parse(savedLocations);
+                } catch (err) {
+                    console.warn('Invalid JSON in localStorage for locations:', savedLocations);
+                    parsedLocations = [];
+                }
+    
+                const updatedLocations = parsedLocations.map(loc =>
+                    loc.zip === oldZip ? data.updatedLocation : loc
+                );
+    
+                localStorage.setItem('locations', JSON.stringify(updatedLocations));
+    
+                setEditingZip(null);
+                setError('ZIP code updated successfully!');
+            } else {
+                setError(data.message);
+            }
+    
+        } catch (err) {
+            console.error('Error updating ZIP:', err);
+            setError('Something went wrong during update.');
+        }
+    };    
+
     const handleDelete = async (zipCode) => {
 
         setShowConfirm(false);
@@ -239,16 +299,32 @@ const Weather = () => {
             <div className='weather-cards'>
                 {weatherCards.map((card, index) => (
                     <div key={index} className='weather-card'>
-                        <button
-                            type='button'
-                            className='delete-card-button'
-                            onClick={() => {
-                                setZipToDelete(card.zip);
-                                setShowConfirm(true);
-                            }}
-                        >
-                            X
-                        </button>
+
+                        <div className='card-buttons'>
+                            <button
+                                type='button'
+                                className='edit-card-button'
+                                onClick={() => {
+                                    setZipBeingEdited(card.zip);
+                                    setNewZip('');
+                                    setShowEditModal(true);
+                                }}
+                            >
+                                ✎
+                            </button>
+
+                            <button
+                                type='button'
+                                className='delete-card-button'
+                                onClick={() => {
+                                    setZipToDelete(card.zip);
+                                    setShowConfirm(true);
+                                }}
+                            >
+                                X
+                            </button>
+                        </div>
+
                         <h3>{card.city}</h3>
                         <p>Weather: {card.precipitation_type} - {card.precipitation_description}</p>
                         <p>Temperature: {card.temperature}°F</p>
@@ -258,6 +334,38 @@ const Weather = () => {
                     </div>
                 ))}
             </div>
+
+            {showEditModal && (
+                <div className='modal-overlay'>
+                    <div className='modal-content'>
+                        <p>Enter a new ZIP code to update:</p>
+                        <input
+                            type="text"
+                            value={newZip}
+                            onChange={(e) => setNewZip(e.target.value)}
+                            placeholder="New ZIP"
+                            className="edit-zip-input"
+                        />
+                        <div className='modal-buttons'>
+                            <button
+                                className='confirm-button'
+                                onClick={() => {
+                                    handleZipUpdate(zipBeingEdited);
+                                    setShowEditModal(false);
+                                }}
+                            >
+                                Update
+                            </button>
+                            <button
+                                className='cancel-button'
+                                onClick={() => setShowEditModal(false)}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {showConfirm && (
                 <div className='modal-overlay'>
