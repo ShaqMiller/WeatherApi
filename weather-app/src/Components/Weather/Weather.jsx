@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import WeatherBlock from "../WeatherBlock/WeatherBlock"
 import './Weather.css';
 
 const Weather = () => {
@@ -190,9 +191,9 @@ const Weather = () => {
     }
 
     return (
-        <div>
+        <div className='body-container'>
             <div className='navigation-bar'>
-                <h1>Welcome, {username}!</h1>
+                <div className='nav-welcome'>Welcome, <span className='nav-name'>{username}!</span></div>
 
                 <button type='button' className='logout-button' onClick={handleLogout}>Logout</button>
             </div>
@@ -212,12 +213,17 @@ const Weather = () => {
                 >
                     Add
                 </button>
-                {error && <p className='search-result'>{error}</p>}
                 
             </div>
+            {error && <><br/><p className='search-result'>{error}</p></>}
 
             <div className='weather-cards'>
-                {weatherCards.map((card, index) => (
+                {weatherCards.map((cardData,index)=>{
+                    return <WeatherBlock weatherData={cardData} isCompact={false} onClick={() => {setZipToDelete(cardData.zip);setShowConfirm(true);}}/>
+                })}
+                {/*  old card design
+                                      
+                {weatherCards.map((card, index) => (  //OLD CARD
                     <div key={index} className='weather-card'>
                         <button
                             type='button'
@@ -236,7 +242,7 @@ const Weather = () => {
                         <p>Humidity: {card.humidity}%</p>
                         <p>Wind Speed: {card.wind_speed} m/s</p>
                     </div>
-                ))}
+                ))} */}
             </div>
 
             {showConfirm && (
