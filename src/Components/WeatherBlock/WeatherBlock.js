@@ -33,6 +33,11 @@ function WeatherBlock({weatherData,onClick,isCompact,onClose}) {
             </div>
 
             <div className={styles.bottomSection}>
+                <div>Humidity: {weatherData.humidity}%</div>
+                <div>Wind: {weatherData.wind_speed} mph</div>
+                <div>Rain (1h): {weatherData.rain_1h} in</div>
+                <div>Sunrise: {new Date(weatherData.sunrise * 1000).toLocaleTimeString()}</div>
+                <div>Sunset: {new Date(weatherData.sunset * 1000).toLocaleTimeString()}</div>
                 <div onClick={onClose} className={styles.removeText}>Remove</div>
             </div>
         </div>
