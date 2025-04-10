@@ -28,6 +28,10 @@ Then navigate to weather-app/backend, then run the command (remove the quotes):
 If using localhost to deploy this application, port 3000 would likely be used for the frontend
 with the backend Express server on port 5000.
 
+So open ina browser the following link:
+
+[http://localhost:3000]
+
 AI Usage In This Project:
 OpenAI's ChatGPT was utilized for some portions of this assignment. The ChatGPT model was 4o.
 Some portions include:
