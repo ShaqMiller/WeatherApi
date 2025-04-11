@@ -334,6 +334,14 @@ const Weather = () => {
 
                         <div className="weather-details">
                             <div className="detail-row">
+                                <span> ZIP:</span>
+                                <span>{card.zip}</span>
+                            </div>
+                            <div className="detail-row">
+                                <span> Country:</span>
+                                <span>{card.country}</span>
+                            </div>
+                            <div className="detail-row">
                                 <span> Temp:</span>
                                 <span>{card.temperature}°F</span>
                             </div>
@@ -348,6 +356,18 @@ const Weather = () => {
                             <div className="detail-row">
                                 <span> Wind:</span>
                                 <span>{card.wind_speed} m/s</span>
+                            </div>
+                            <div className="detail-row">
+                                <span> Rain (1h):</span>
+                                <span>{card.rain_1h ?? 0} mm</span>
+                            </div>
+                            <div className="detail-row">
+                                <span> Sunrise:</span>
+                                <span>{new Date(card.sunrise * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            </div>
+                            <div className="detail-row">
+                                <span> Sunset:</span>
+                                <span>{new Date(card.sunset * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                             </div>
                         </div>
 
