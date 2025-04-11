@@ -16,6 +16,18 @@ app.use(bodyParser.json());
 // so ill be putting the 3 parts in a separate file along with the 
 // OpenWeatherMap api key
 
+let part1 = "";
+let part2 = "";
+let part3 = "";
+
+let googleClientID = '';
+
+const apiKey = '';
+
+const googleClient = new OAuth2Client(googleClientID);
+
+const jwtSecret = 'jwtweatherkey';
+const jwtExpiry = '2h';
 
 const url = `mongodb+srv://${part1}:${part2}@cluster0.${part3}.mongodb.net/WeatherApp?retryWrites=true&w=majority`;
 

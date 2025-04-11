@@ -1,6 +1,9 @@
 # WeatherApi
 
-Note:
+=================================NOTE================================
+Parts of the code in the server.js were removed. These codes consisted of things such as
+MongoDB url link and API keys. As such, the server.js will not work in the file state.
+
 To run this app, navigate to weather-app. Then run the following commands (remove the quotes):
 
 "npm install express body-parser cors mongodb bcryptjs axios jsonwebtoken google-auth-library"
