@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WeatherBlock from "../WeatherBlock/WeatherBlock"
+
 import './Weather.css';
 
 const Weather = () => {
@@ -271,9 +272,9 @@ const Weather = () => {
     }
 
     return (
-        <div className='body-container'>
+        <div>
             <div className='navigation-bar'>
-                <div className='nav-welcome'>Welcome, <span className='nav-name'>{username}!</span></div>
+                <h1>Welcome, {username}!</h1>
 
                 <button type='button' className='logout-button' onClick={handleLogout}>Logout</button>
             </div>
@@ -293,72 +294,14 @@ const Weather = () => {
                 >
                     Add
                 </button>
+                {error && <p className='search-result'>{error}</p>}
                 
             </div>
-            {error && <><br/><p className='search-result'>{error}</p></>}
 
             <div className='weather-cards'>
                 {weatherCards.map((cardData,index)=>{
-                    return <WeatherBlock weatherData={cardData} isCompact={false} onClick={() => {setZipToDelete(cardData.zip);setShowConfirm(true);}}/>
+                    return (<WeatherBlock weatherData={cardData} isCompact={false} onClose={() => {setZipToDelete(cardData.zip);setShowConfirm(true);}}/>)
                 })}
-                {/*  old card design
-                                      
-                {weatherCards.map((card, index) => (  //OLD CARD
-                    <div key={index} className='weather-card'>
-
-                        <div className='card-buttons'>
-                            <button
-                                type='button'
-                                className='edit-card-button'
-                                onClick={() => {
-                                    setZipBeingEdited(card.zip);
-                                    setNewZip('');
-                                    setShowEditModal(true);
-                                }}
-                            >
-                                ✎
-                            </button>
-
-                            <button
-                                type='button'
-                                className='delete-card-button'
-                                onClick={() => {
-                                    setZipToDelete(card.zip);
-                                    setShowConfirm(true);
-                                }}
-                            >
-                                X
-                            </button>
-                        </div>
-
-                        <h3 className="card-title">{card.city}</h3>
-
-                        <div className="weather-summary">
-                            <p className="weather-type">{card.precipitation_type}</p>
-                            <p className="weather-description">({card.precipitation_description})</p>
-                        </div>
-
-                        <div className="weather-details">
-                            <div className="detail-row">
-                                <span> Temp:</span>
-                                <span>{card.temperature}°F</span>
-                            </div>
-                            <div className="detail-row">
-                                <span> Feels Like:</span>
-                                <span>{card.feels_like}°F</span>
-                            </div>
-                            <div className="detail-row">
-                                <span> Humidity:</span>
-                                <span>{card.humidity}%</span>
-                            </div>
-                            <div className="detail-row">
-                                <span> Wind:</span>
-                                <span>{card.wind_speed} m/s</span>
-                            </div>
-                        </div>
-
-                    </div>
-                ))} */}
             </div>
 
             {showEditModal && (

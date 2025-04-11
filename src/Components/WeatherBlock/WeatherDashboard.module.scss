@@ -1,0 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Exo:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+// .container{
+//     position: fixed;
+//     background-color: #11141a;
+//     right: 0;
+//     height:100%;
+//     padding: 10px;
+//     width: 600px;
+//     animation: slideInFromRight 0.2s ease-out forwards;
+// }
+
+.container{
+    position: fixed;
+    background-color: #11141a;
+    bottom: 0%;
+    height:500px;
+    padding: 10px;
+    width: 100vw;
+    animation: slideInFromBottom 0.2s ease-out forwards;
+}
+
+.closeContainer{
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    margin-left: 10px;
+    .svgCloseImg{
+        height: 100%;
+        cursor: pointer;
+    }
+}
+
+.bottomSection{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.locationName{
+    font-size: 30px;
+    font-weight: 600;
+    color: white;
+}
+
+
+
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  
+  

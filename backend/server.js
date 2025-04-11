@@ -1,5 +1,3 @@
-import dotenv from 'dotenv';
-dotenv.config();
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
@@ -8,7 +6,6 @@ import bcrypt from 'bcryptjs';
 import axios from 'axios';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
-
 
 const app = express();
 app.use(cors());
@@ -19,11 +16,8 @@ app.use(bodyParser.json());
 // so ill be putting the 3 parts in a separate file along with the 
 // OpenWeatherMap api key
 
+const url = `mongodb+srv://${part1}:${part2}@cluster0.${part3}.mongodb.net/WeatherApp?retryWrites=true&w=majority`;
 
-// const url = `mongodb+srv://${part1}:${part2}@cluster0.${part3}.mongodb.net/WeatherApp?retryWrites=true&w=majority`;
-const url = `mongodb+srv://${process.env.MONGODB_USERNAME}:${process.env.MONGODB_PASSWORD}@${process.env.MONGODB_CLUSTER}.${process.env.MONGODB_END}.mongodb.net/WeatherApp?retryWrites=true&w=majority`;
-
-console.log(url)
 const client = new MongoClient(url);
 client.connect(console.log("mongodb connected"));
 
@@ -215,7 +209,7 @@ app.post('/api/zipcode', authenticateToken, async (req, res) => {
     }
 
     try {
-        const response = await axios.get(`http://api.openweathermap.org/geo/1.0/zip?zip=${zipCode},US&appid=${process.env.WEATHER_API}`);
+        const response = await axios.get(`http://api.openweathermap.org/geo/1.0/zip?zip=${zipCode},US&appid=${apiKey}`);
 
         if (response.status === 200) {
             const { name, lat, lon } = response.data;
@@ -288,11 +282,11 @@ app.post('/api/weather', authenticateToken, async (req, res) => {
         for (const location of locations) {
             const { zip, latitude, longitude } = location;
 
-            const response = await axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${process.env.WEATHER_API}&units=imperial`);
+            const response = await axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=imperial`);
 
             if (response.status === 200) {
                 const weatherData = response.data;
-                console.log(weatherData)
+
                 weatherDataList.push({
                     zip: zip,
                     city: weatherData.name,
@@ -305,13 +299,11 @@ app.post('/api/weather', authenticateToken, async (req, res) => {
                     precipitation_description: weatherData.weather[0].description,
                     rain_1h: weatherData.rain?.["1h"] ?? 0,
                     sunrise: weatherData.sys.sunrise,
-                    sunset: weatherData.sys.sunset,
-                    description:weatherData.weather[0].description
+                    sunset: weatherData.sys.sunset
                 });
-                console.log(weatherDataList)
-
-            }   
+            }
         }
+
         return res.json(weatherDataList);
     } catch (error) {
         console.error('Error with fetching weather data:', error);
