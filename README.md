@@ -10,13 +10,17 @@ to not trigger the detection bots on API keys:
 =================================================================
 
 MONGO_USER=st (break) 483637
+
 MONGO_PASS=Pass (break) 1234
+
 MONGO_CLUSTER=vb (break) 5wt
 
 GOOGLE_CLIENT_ID=310822885370-dd15h (break) 5a1p7685abe5i46h0 (break) aga2gtlkep.apps.googleusercontent.com
+
 OPENWEATHER_API_KEY=c1185fb0 (break) e311256ffc1ff5 (break) aa8a8b0298
 
 JWT_SECRET=jwtweatherkey
+
 JWT_EXPIRY=2h
 
 =================================================================
