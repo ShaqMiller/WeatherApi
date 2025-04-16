@@ -6,7 +6,9 @@ import bcrypt from 'bcryptjs';
 import axios from 'axios';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
+import dotenv from 'dotenv';
 
+dotenv.config();
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
@@ -16,18 +18,17 @@ app.use(bodyParser.json());
 // so ill be putting the 3 parts in a separate file along with the 
 // OpenWeatherMap api key
 
-let part1 = "";
-let part2 = "";
-let part3 = "";
+const part1 = process.env.MONGO_USER;
+const part2 = process.env.MONGO_PASS;
+const part3 = process.env.MONGO_CLUSTER;
 
-let googleClientID = '';
-
-const apiKey = '';
+const googleClientID = process.env.GOOGLE_CLIENT_ID;
+const apiKey = process.env.OPENWEATHER_API_KEY;
 
 const googleClient = new OAuth2Client(googleClientID);
 
-const jwtSecret = 'jwtweatherkey';
-const jwtExpiry = '2h';
+const jwtSecret = process.env.JWT_SECRET;
+const jwtExpiry = process.env.JWT_EXPIRY;
 
 const url = `mongodb+srv://${part1}:${part2}@cluster0.${part3}.mongodb.net/WeatherApp?retryWrites=true&w=majority`;
 
